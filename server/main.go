@@ -90,8 +90,17 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleNextRound(w http.ResponseWriter, r *http.Request) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	MessageInfo = make([]Message, 0)
+}
+
 func main() {
 	http.HandleFunc("/", handleConnections)
+	http.HandleFunc("/next-round", handleNextRound)
+	
 	err := http.ListenAndServe("localhost:3000", nil)
 	if err != nil {
 		log.Fatal(err)

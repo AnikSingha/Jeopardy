@@ -1,0 +1,13 @@
+{
+    "manifest_version": 3,
+    "name": "Jeopardy",
+    "version": "1.0",
+    "permissions": ["activeTab", "tabs", "webNavigation", "webRequest", "webRequestBlocking", "http://localhost:8080/*", "websocket"],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "action": {
+      "default_popup": "popup.html"
+    }
+  }
+  
