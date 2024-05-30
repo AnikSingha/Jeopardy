@@ -2,12 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
 	"sync"
 	"time"
-
-	"github.com/gorilla/websocket"
 )
 
 type Message struct {
@@ -20,10 +19,15 @@ type Notification struct {
 	User        string `json:"user"`
 }
 
-var upgrader = websocket.Upgrader{}
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
 var mutex sync.Mutex
 var MessageInfo []Message
-var connections = make(map[*websocket.Conn]string) // map to store connections and their associated users
+var connections = make(map[*websocket.Conn]string)
 
 func notifyAll(notification Notification) {
 	mutex.Lock()
@@ -39,9 +43,11 @@ func notifyAll(notification Notification) {
 func handleDisconnection(conn *websocket.Conn) {
 	mutex.Lock()
 	defer mutex.Unlock()
-	
+
+	conn.Close()
+
 	user := connections[conn]
-	delete(connections, conn) // remove the connection from the map
+	delete(connections, conn)
 
 	notification := Notification{MessageType: "User Disconnected", User: user}
 	notifyAll(notification)
@@ -52,7 +58,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	defer func() {
 		handleDisconnection(conn)
 	}()
@@ -100,7 +106,7 @@ func handleNextRound(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.HandleFunc("/", handleConnections)
 	http.HandleFunc("/next-round", handleNextRound)
-	
+
 	err := http.ListenAndServe("localhost:3000", nil)
 	if err != nil {
 		log.Fatal(err)
